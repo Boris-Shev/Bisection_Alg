@@ -1,21 +1,26 @@
 #include "header.hpp"
 
-int TestInitArg (int argc, char* argv[], int* n, int* m, int* k, double* eps) {
-  if (argc < 5)
+int TestInitArg (int argc, char* argv[], int* n, int* m, int* k, double* eps,
+                 double* leftb, double* rightb) {
+  if(argc < 7)
     return -1;
 
-  for (int i = 1; i < 5; i++) {
+  for (int i = 1; i < 7; i++) {
     std::string s(argv[i]);
     std::string::const_iterator it = s.begin();
-    if (i != 3) {
+    if ((i != 3) && (i != 4) && (i != 5)) {
       while (it != s.end() && std::isdigit(*it)) ++it;
       if (!(!s.empty() && it == s.end()))
         return -2;
     } else {
+
   M:  while (it != s.end() && std::isdigit(*it)) ++it;
       if (*it == '.') {
+        if (it + 1 == s.end() && it == s.begin())
+          return -2;
         it++; goto M;
       }
+
       if (*it == 'e') {
         if (*(it + 1) == '-') {
           if (it + 2 == s.end() || it == s.begin())
@@ -27,6 +32,13 @@ int TestInitArg (int argc, char* argv[], int* n, int* m, int* k, double* eps) {
           it += 1; goto M;
         }
       }
+
+      if (*it == '-') {
+        if (it + 1 == s.end())
+          return -2;
+        it += 1; goto M;
+      }
+
       if (!(!s.empty() && it == s.end()))
         return -2;
       }
@@ -34,7 +46,9 @@ int TestInitArg (int argc, char* argv[], int* n, int* m, int* k, double* eps) {
   *n = std::stoi(argv[1]);
   *m = std::stoi(argv[2]);
   *eps = std::stod(argv[3]);
-  *k = std::stoi(argv[4]);
+  *leftb = std::stod(argv[4]);
+  *rightb = std::stod(argv[5]);
+  *k = std::stoi(argv[6]);
   return 0;
 }
 
@@ -95,25 +109,38 @@ void PrintMat (double* matrx, int numRow, int numCol, int limiter) {
       printf("\n");
     }
   }
+  printf("\n");
 }
 
-double Residual (double* A, int n, double* b, double* x) {
-  double norm_b = 0;
-  double norm_num = 0;
-  double sum;
+void PrintMat (double* matrx, int numRow, int numCol) {
+  PrintMat(matrx, numRow, numCol, std::max(numCol, numRow));
+}
 
-  for (int i = 0; i < n; i++) {
-    norm_b += b[i] * b[i];
+double Residual (double* A, int n, double* x, int mode) {
+  int numVal = (int)x[0];
+  double sum1 = 0, sum2 = 0;
+
+  if(mode == 1) {
+    for (int i = 0; i < numVal; i++)
+      sum1 += x[i + 1];
+    for (int i = 0; i < n; i++)
+      sum2 += A[i * n + i];
+
+    return std::fabs(sum2 - sum1);
   }
 
-  for (int i = 0; i < n; i++) {
-    sum = 0;
-    for (int k = 0; k < n; k++) {
-      sum += A[i*n + k] * x[k];
-    }
-    norm_num += (sum - b[i]) * (sum - b[i]);
+  if (mode == 2) {
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++)
+        sum1 += A[i * n + j] * A[i * n + j];
+
+    for (int i = 0; i < n; i++)
+      sum2 += x[i + 1] * x[i + 1];
+
+    return std::fabs(std::sqrt(sum2) - std::sqrt(sum1));
   }
-  return std::sqrt(std::fabs(norm_num)) / std::sqrt(std::fabs(norm_b));
+
+  return -1;
 }
 
 double Inaccuracy (double* x, int size) {
