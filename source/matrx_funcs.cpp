@@ -134,10 +134,10 @@ double Residual (double* A, int n, double* x, int mode) {
       for (int j = 0; j < n; j++)
         sum1 += A[i * n + j] * A[i * n + j];
 
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < numVal; i++)
       sum2 += x[i + 1] * x[i + 1];
 
-    return std::fabs(std::sqrt(sum2) - std::sqrt(sum1));
+    return std::fabs(std::sqrt(std::fabs(sum2)) - std::sqrt(std::fabs(sum1)));
   }
 
   return -1;

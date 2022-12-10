@@ -87,9 +87,10 @@ int main(int argc, char* argv[]) {
     printf("%lf\n", x[i + 1]);
 
   printf("\nВремя алгоритма: %.3lf\n", time);
-  printf("Невязка в 1-ом инварианте: %lf\n", Residual(matrx, n, x, 1));
-  printf("Невязка во 2-ом инварианте: %lf\n", Residual(matrx, n, x, 2));
-
+  if((int)x[0] == n) {
+    printf("Невязка в 1-ом инварианте: %lf\n", Residual(matrx, n, x, 1));
+    printf("Невязка во 2-ом инварианте: %lf\n", Residual(matrx, n, x, 2));
+  }
   delete[] matrx;
   delete[] x;
   return 0;

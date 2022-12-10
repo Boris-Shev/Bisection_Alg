@@ -11,6 +11,7 @@ endif ()
 include_directories(${BISEC_INCLUDE_DIRS})
 
 add_compile_options(
+      -o3
       -mfpmath=sse
       -fstack-protector-all
       -g
