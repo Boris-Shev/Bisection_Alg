@@ -5,15 +5,15 @@ int BisecAlg (int n, double* A, double* x, double eps, double leftb,
   if (!IsSymmetrical(A, n))
     return -1;
 
-  if ((rightb < leftb) ||
-      (std::fabs(rightb - leftb) < std::numeric_limits<double>::epsilon()))
+  if (rightb < leftb)
     return -2;
 
+  PrintMat(A, n, n);
   Tridiagonal(A, n);
-	//PrintMat(A, n, n);
+	PrintMat(A, n, n);
 
-  rightb += eps;
-	leftb -= eps;
+  rightb += std::numeric_limits<double>::epsilon();
+	leftb -= std::numeric_limits<double>::epsilon();
 	x[0] = (double)n_(n, A, rightb) - n_(n, A, leftb);
 	if (std::fabs(x[0]) < std::numeric_limits<double>::epsilon())
 		return 0;
@@ -23,12 +23,12 @@ int BisecAlg (int n, double* A, double* x, double eps, double leftb,
 	double curRight = rightb;
   double curMid;
 
-  int ind = 0, count;
-	while (ind < (int)x[0]) {
+  int doneCount = 0, count;
+	while (doneCount < (int)x[0]) {
 		while (curRight - curLeft > eps) {
 			curMid = 0.5 * (curLeft + curRight);
 
-			if (n_(n, A, curMid) < ind + 1 + beforeLeftBorderCount)
+			if (n_(n, A, curMid) < doneCount + 1 + beforeLeftBorderCount)
 				curLeft = curMid;
 			else
 				curRight = curMid;
@@ -36,10 +36,12 @@ int BisecAlg (int n, double* A, double* x, double eps, double leftb,
 
 		curMid = 0.5 * (curLeft + curRight);
 		count = n_(n, A, curRight) - n_(n, A, curLeft);
-		for (int j = 0; j < count; ++j)
-			x[ind + j + 1] = curMid;
+		for (int j = 0; j < count; j++) {
+        //printf("%d  %d  %d  %d  %f  %f  %f\n", doneCount, j, count, doneCount + j + 1, curLeft, curMid, curRight);
+        x[doneCount + j + 1] = curMid;
+    }
 
-		ind += count;
+		doneCount += count;
 		curLeft = curMid;
 		curRight = rightb;
 	}

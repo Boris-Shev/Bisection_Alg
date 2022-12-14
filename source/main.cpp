@@ -91,6 +91,7 @@ int main(int argc, char* argv[]) {
     printf("Невязка в 1-ом инварианте: %lf\n", Residual(matrx, n, x, 1));
     printf("Невязка во 2-ом инварианте: %lf\n", Residual(matrx, n, x, 2));
   }
+
   delete[] matrx;
   delete[] x;
   return 0;

@@ -60,6 +60,7 @@ int InMat (int size, int formula, double* matrx, char* file) {
     }
     int i;
     for (i = 0; fin >> matrx[i] && i < size*size; i++) {}
+
     if (fin.eof() && i == size*size)
       {}
     else if (fin.eof() && i != size*size) // Недостаточное количество элементов
