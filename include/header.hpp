@@ -8,6 +8,7 @@
 #include <limits>
 #include <type_traits>
 #include <string>
+#include <algorithm>
 
 int TestInitArg (int argc, char* argv[], int* n, int* m, int* k, double* eps,
                  double* leftb, double* rightb);
@@ -32,6 +33,8 @@ void Tridiagonal(double* matrx, int n);
 double Residual (double* matrx, int n, double* x, int mode);
 
 double Inaccuracy (double* x, int size);
+
+int Sgn(double x);
 
 
 #endif // _HEADER_HPP_

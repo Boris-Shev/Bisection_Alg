@@ -1,5 +1,9 @@
 #include "header.hpp"
 
+//TODO: Разобраться как алгоритм обрабатывает невырожденные матрицы
+//TODO: Убрать глобальную переменную
+int Iter = 0;
+
 int BisecAlg (int n, double* A, double* x, double eps, double leftb,
               double rightb) {
   if (!IsSymmetrical(A, n))
@@ -8,16 +12,25 @@ int BisecAlg (int n, double* A, double* x, double eps, double leftb,
   if (rightb < leftb)
     return -2;
 
-  PrintMat(A, n, n);
+  //PrintMat(A, n, n);
   Tridiagonal(A, n);
-	PrintMat(A, n, n);
+	//PrintMat(A, n, n);
 
-  rightb += std::numeric_limits<double>::epsilon();
-	leftb -= std::numeric_limits<double>::epsilon();
+
+  // int k = 20;
+  // for (int i = 0; i <= k; i++) {
+  //   printf("%.2f:  %d\n", leftb + i * (rightb - leftb)/k, n_(n, A, leftb + i * (rightb - leftb)/k + eps));
+  // }
+  // return -1;
+  //printf("%.2f:  %d\n", 1., n_(n, A, rightb));
+  //return -1;
+
+  rightb += eps;
+	leftb -= eps;
 	x[0] = (double)n_(n, A, rightb) - n_(n, A, leftb);
 	if (std::fabs(x[0]) < std::numeric_limits<double>::epsilon())
 		return 0;
-
+////////////////////////////////////////////////////////////////////
 	int beforeLeftBorderCount = n_(n, A, leftb);
 	double curLeft = leftb;
 	double curRight = rightb;
@@ -34,10 +47,13 @@ int BisecAlg (int n, double* A, double* x, double eps, double leftb,
 				curRight = curMid;
 		}
 
+    //printf("test1: %d\n", doneCount);
 		curMid = 0.5 * (curLeft + curRight);
-		count = n_(n, A, curRight) - n_(n, A, curLeft);
+    //printf("curMid: %.20lf\n", curMid);
+    count = n_(n, A, curRight) - n_(n, A, curLeft);
 		for (int j = 0; j < count; j++) {
         //printf("%d  %d  %d  %d  %f  %f  %f\n", doneCount, j, count, doneCount + j + 1, curLeft, curMid, curRight);
+        //printf("%d:  %d\n", j, doneCount + j + 1);
         x[doneCount + j + 1] = curMid;
     }
 
@@ -46,6 +62,7 @@ int BisecAlg (int n, double* A, double* x, double eps, double leftb,
 		curRight = rightb;
 	}
 
+  printf("Iter = %d\n", Iter);
 	return 0;
 }
 
@@ -62,39 +79,91 @@ bool IsSymmetrical(double* A, int n) {
 
 int n_(int n, double* A, double lambda)
 {
-	int res;
-	double x, y;
+  // REMIND: Проверять что х и у не равны одновременно 0
+  // REMIND: а = alphaInv * (a - lambda);    b = alphaInv * b;
+  // TODO: Рассматривать случаи когда внедиагональные элементы 0
+  Iter ++;
+  lambda += 1e-10;
 
-	x = A[0 * n + 0] - lambda;
-	y = 1.0;
-	if (x < 0.)
-    res = 1;
-  else
-    res = 0;
+  double alphaInv = std::fabs(A[0 * n + 0] - lambda);
+  for (int i = 1; i < n; i++) {
+    if (std::fabs(A[i * n + i]) > alphaInv)
+      alphaInv = std::fabs(A[i * n + i] - lambda);
 
-  double u, v, tmp, a_k, b_k1, gamma;
-	for (int i = 1; i < n; i++)
-	{
-		a_k = A[i * n + i] - lambda;
-		b_k1 = A[i * n + i - 1];
+    if (std::fabs(A[i * n + i - 1]) > alphaInv)
+      alphaInv = std::fabs(A[i * n + i - 1]);
+  }
+  if (std::fabs(alphaInv) < std::numeric_limits<double>::epsilon()) {
+    if (lambda < 0)
+      return 0;
+    else
+      return n;
+  }
+  alphaInv = 1. / (4 * alphaInv);
 
-		tmp = std::fabs(b_k1 * b_k1 * y);
-		if (std::fabs(x) > tmp)
-			tmp = std::fabs(x);
+  int count = 0;
+  double w = std::numeric_limits<double>::epsilon();
+  double M = 1. / (8. * w);
+  double x = alphaInv * (A[0] - lambda);
+  double y = 1;
+  if (A[0] < lambda)
+    count++;
 
-		if (tmp < std::numeric_limits<double>::epsilon())
-			tmp = 10 * std::numeric_limits<double>::epsilon();
+  double a, b;
+  double u, v;
+  double t, q, l, m;
+  for (int i = 1; i < n; i++) {
 
-		gamma = (1 / std::numeric_limits<double>::epsilon()) / tmp;
-		u = gamma * (a_k * x - b_k1 * b_k1 * y);
-		v = gamma * x;
-		if (u * x < 0.0)
-			res++;
-		x = u;
-		y = v;
-	}
+    if (std::fabs(x) < w) {
+      if (std::fabs(y) < w) {
+        if (lambda > 0)
+          count += n - i - 1;
+        break;
+      }
+      x = - Sgn(y);
+      y = 0;
+      count++;
+      continue;
+    }
 
-	return res;
+    a = alphaInv * (A[i * n + i] - lambda);
+    b = alphaInv * A[i * n + i - 1];
+
+    if (std::fabs(b) < w) {
+      if (std::fabs(a) < w) {
+        y = x;
+        x = 0;
+        continue;
+      }
+      if (a < 0)
+        count++;
+      y = x;
+      x = - Sgn(x);
+      continue;
+    }
+
+    t = std::fmax(std::fabs(b * (b * y)), std::fabs(x));
+    v = (t < 1) * ((x / t) * M) + !(t < 1) * ((M / t) * x);
+    q = a * v;
+
+    m = (M * b) * b;
+    l = (((m < 1) && (t < 1)) || (!(m < 1) && !(t < 1))) * ((m / t) * y) +
+        (((m < 1) && !(t < 1)) || (!(m < 1) && (t < 1))) * ((y / t) * m);
+    u = q - l;
+
+    if (std::fabs(u) < w){
+      x = 0;
+      y = v; // maybe problems
+      continue;
+    }
+
+    if ((x > 0 && u < 0) || (x < 0 && u > 0))
+      count++;
+    x = u; // maybe problems
+    y = v; // maybe problems
+  }
+
+	return count;
 }
 
 void Tridiagonal(double* A, int n)
@@ -146,4 +215,8 @@ void Tridiagonal(double* A, int n)
 			A[j * n + j] = A_ji * sin + A_jj * cos;
 		}
 	}
+}
+
+int Sgn(double x) {
+  return (x > 0) - (x < 0);
 }

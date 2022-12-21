@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
   printf("Количество собственных значений: %d\n", (int)x[0]);
   for (int i = 0, limiter = std::min(m, int(x[0])); i < limiter; i++)
-    printf("%lf\n", x[i + 1]);
+    printf("%.20lf\n", x[i + 1]);
 
   printf("\nВремя алгоритма: %.3lf\n", time);
   if((int)x[0] == n) {
